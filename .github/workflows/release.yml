@@ -57,8 +57,7 @@ jobs:
           body: |
             BuildID: ${{ env.FIREFOX_BUILD_ID }}
 
-            > [!NOTE]
-            > **[Firefox Release Notes](${{ env.RELEASE_NOTES_URL }})**
+            **[Firefox Release Notes](${{ env.RELEASE_NOTES_URL }})**
 
             > [!TIP]
             > Expand the "Assets" section below to download the AppImage.
