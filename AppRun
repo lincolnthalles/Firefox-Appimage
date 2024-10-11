@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-if [ ! -z "$DEBUG" ] ; then
+if [ -n "$DEBUG" ]; then
   env
   set -x
 fi
@@ -11,13 +11,12 @@ fi
 export SNAP_NAME="firefox"
 export MOZ_LEGACY_PROFILES=1
 
-
 THIS="$0"
 # http://stackoverflow.com/questions/3190818/
 args=("$@")
 NUMBER_OF_ARGS="$#"
 
-if [ -z "$APPDIR" ] ; then
+if [ -z "$APPDIR" ]; then
   # Find the AppDir. It is the directory that contains AppRun.
   # This assumes that this script resides inside the AppDir or a subdirectory.
   # If this script is run inside an AppImage, then the AppImage runtime likely has already set $APPDIR
@@ -29,7 +28,7 @@ if [ -z "$APPDIR" ] ; then
 fi
 path="$(dirname "$(readlink -f "${THIS}")")"
 export APPDIR="$path"
-echo $APPDIR
+echo "$APPDIR"
 
 export PATH="${APPDIR}:${APPDIR}/usr/sbin:${PATH}"
 export XDG_DATA_DIRS="./share/:/usr/share/gnome:/usr/local/share/:/usr/share/:${XDG_DATA_DIRS}"
@@ -39,16 +38,15 @@ export GSETTINGS_SCHEMA_DIR="${APPDIR}/usr/share/glib-2.0/schemas:${GSETTINGS_SC
 
 BIN="$APPDIR/FIREFOX_BIN_FILE"
 
-if [ -z "$APPIMAGE_EXIT_AFTER_INSTALL" ] ; then
+if [ -z "$APPIMAGE_EXIT_AFTER_INSTALL" ]; then
   trap atexit EXIT
 fi
 
 isEulaAccepted=1
 
-atexit()
-{
-  if [ $isEulaAccepted == 1 ] ; then
-    if [ $NUMBER_OF_ARGS -eq 0 ] ; then
+atexit() {
+  if [ $isEulaAccepted == 1 ]; then
+    if [ $NUMBER_OF_ARGS -eq 0 ]; then
       exec "$BIN"
     else
       exec "$BIN" "${args[@]}"
@@ -56,13 +54,12 @@ atexit()
   fi
 }
 
-error()
-{
-  if [ -x /usr/bin/zenity ] ; then
+error() {
+  if [ -x /usr/bin/zenity ]; then
     LD_LIBRARY_PATH="" zenity --error --text "${1}" 2>/dev/null
-  elif [ -x /usr/bin/kdialog ] ; then
+  elif [ -x /usr/bin/kdialog ]; then
     LD_LIBRARY_PATH="" kdialog --msgbox "${1}" 2>/dev/null
-  elif [ -x /usr/bin/Xdialog ] ; then
+  elif [ -x /usr/bin/Xdialog ]; then
     LD_LIBRARY_PATH="" Xdialog --msgbox "${1}" 2>/dev/null
   else
     echo "${1}"
@@ -70,15 +67,14 @@ error()
   exit 1
 }
 
-yesno()
-{
+yesno() {
   TITLE=$1
   TEXT=$2
-  if [ -x /usr/bin/zenity ] ; then
+  if [ -x /usr/bin/zenity ]; then
     LD_LIBRARY_PATH="" zenity --question --title="$TITLE" --text="$TEXT" 2>/dev/null || exit 0
-  elif [ -x /usr/bin/kdialog ] ; then
+  elif [ -x /usr/bin/kdialog ]; then
     LD_LIBRARY_PATH="" kdialog --title "$TITLE" --yesno "$TEXT" || exit 0
-  elif [ -x /usr/bin/Xdialog ] ; then
+  elif [ -x /usr/bin/Xdialog ]; then
     LD_LIBRARY_PATH="" Xdialog --title "$TITLE" --clear --yesno "$TEXT" 10 80 || exit 0
   else
     echo "zenity, kdialog, Xdialog missing. Skipping ${THIS}."
@@ -86,17 +82,15 @@ yesno()
   fi
 }
 
-check_dep()
-{
+check_dep() {
   DEP=$1
-  if [ -z $(which "$DEP") ] ; then
+  if [ -z "$(which "$DEP")" ]; then
     echo "$DEP is missing. Skipping ${THIS}."
     exit 0
   fi
 }
 
-if [ -z "$APPIMAGE" ] ; then
+if [ -z "$APPIMAGE" ]; then
   APPIMAGE="$APPDIR/AppRun"
   # not running from within an AppImage; hence using the AppRun for Exec=
 fi
-

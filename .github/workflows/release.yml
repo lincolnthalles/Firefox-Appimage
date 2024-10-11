@@ -1,57 +1,71 @@
-
 name: Release
+
 on:
-  schedule:
-    - cron: "5 */12 * * *"
+  merge_group:
+  pull_request:
+    branches:
+      - "main"
   push:
     branches:
-      - "master"
-
+      - "main"
+  schedule:
+    - cron: "5 */12 * * *"
+  workflow_dispatch:
 
 jobs:
   Build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        product: ['firefox', 'firefox-beta', 'firefox-esr', 'firefox-nightly', 'firefox-devedition']
+        os: [linux, linux64] # i686/x86_64
+        language: [en-US, pt-BR]
+        product:
+          [
+            "firefox",
+            "firefox-beta",
+            "firefox-esr",
+            "firefox-nightly",
+            "firefox-devedition",
+          ]
     env:
       FIREFOX_PRODUCT: ${{ matrix.product }}
-      FIREFOX_OS: 'linux64'
-      FIREFOX_LANG: 'en-US'
+      FIREFOX_OS: ${{ matrix.os }}
+      FIREFOX_LANG: ${{ matrix.language }}
+      FIREFOX_VERSION: NOT_SET
+      FIREFOX_BUILD_ID: NOT_SET
+      RELEASE_NOTES_URL: https://www.mozilla.org/firefox/releasenotes
+    permissions:
+      contents: write
     steps:
-    - uses: actions/checkout@v2
-      
+      - uses: actions/checkout@v4
 
-    - name: Build ${{ matrix.product }}
-      run: |
-        bash build/build.sh
-        echo "$FIREFOX_VERSION.r$FIREFOX_BUILD_ID"
+      - name: Build ${{ matrix.product }}-${{ env.FIREFOX_LANG }}
+        run: |
+          bash build/build.sh
+          echo "$FIREFOX_VERSION.r$FIREFOX_BUILD_ID"
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v1
-      with:
-        name: ${{ matrix.product }}-continuous.AppImage
-        path: 'dist'
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.product }}-${{env.FIREFOX_VERSION}}-${{ env.FIREFOX_LANG }}.AppImage
+          path: "dist"
 
-    - name: Release Tagged
-      uses: marvinpinto/action-automatic-releases@latest
-      with:
-        title: ${{ matrix.product }} v${{ env.FIREFOX_VERSION }}.r${{ env.FIREFOX_BUILD_ID }}
-        automatic_release_tag: ${{ env.FIREFOX_PRODUCT }}-v${{ env.FIREFOX_VERSION }}.r${{ env.FIREFOX_BUILD_ID }}
-        prerelease: true
-        draft: false 
-        files: |
-          dist
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
+      - if: ${{ matrix.product != 'firefox' }}
+        name: Release Variant
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.AppImage
+            dist/*.zsync
+          body: |
+            BuildID: ${{ env.FIREFOX_BUILD_ID }}
 
-    - name: Release Continuous
-      uses: marvinpinto/action-automatic-releases@latest
-      with:
-        title: Latest Continous build for ${{ matrix.product }} v${{ env.FIREFOX_VERSION }}.r${{ env.FIREFOX_BUILD_ID }}
-        automatic_release_tag: ${{ env.FIREFOX_PRODUCT }}
-        prerelease: false
-        draft: false 
-        files: |
-          dist
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
+            > [!NOTE]
+            > **[Firefox Release Notes](${{ env.RELEASE_NOTES_URL }})**
 
+            > [!TIP]
+            > Expand the "Assets" section below to download the AppImage.
+          tag_name: ${{ env.FIREFOX_PRODUCT }}-${{env.FIREFOX_VERSION}}-${{ env.FIREFOX_LANG }}
+          draft: false
+          prerelease: false
+          make_latest: false

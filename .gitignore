@@ -1,7 +1,8 @@
+.GITHUB_ENV
 *.AppImage
-AppDir
-*.zsync
-dist/
-*.tar.*
-build/appimagetool
 *.DELETE_ME
+*.tar.*
+*.zsync
+AppDir
+build/appimagetool
+dist/
