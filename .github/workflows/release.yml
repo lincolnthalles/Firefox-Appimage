@@ -44,12 +44,6 @@ jobs:
           bash build/build.sh
           echo "$FIREFOX_VERSION.r$FIREFOX_BUILD_ID"
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.product }}-${{env.FIREFOX_VERSION}}-${{ env.FIREFOX_LANG }}.AppImage
-          path: "dist"
-
       - if: ${{ matrix.product != 'firefox' }}
         name: Release Variant
         uses: softprops/action-gh-release@v2
