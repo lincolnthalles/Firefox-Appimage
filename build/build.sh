@@ -67,7 +67,7 @@ export ARCH=FIREFOX_ARCH
 ./build/appimagetool -n --comp gzip \
     build/AppDir \
     --updateinformation "gh-releases-zsync|$GH_USER|$GH_REPO|$FIREFOX_PRODUCT|$FIREFOX_PRODUCT*.AppImage.zsync" \
-    "${FIREFOX_PRODUCT}-${FIREFOX_VERSION}-${FIREFOX_LANG}-${FIREFOX_ARCH}".AppImage
+    "${FIREFOX_PRODUCT}-${FIREFOX_VERSION}-${FIREFOX_ARCH}-${FIREFOX_LANG}".AppImage
 
 mkdir -p dist
 mv "$FIREFOX_PRODUCT"*.AppImage* dist/.

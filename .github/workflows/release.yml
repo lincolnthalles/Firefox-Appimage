@@ -5,6 +5,8 @@ on:
   pull_request:
     branches:
       - "main"
+    paths-ignore:
+      - "**/*.md"
   push:
     branches:
       - "main"
@@ -17,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [linux, linux64] # i686/x86_64
+        os: [linux64] # i686/x86_64
         language: [en-US, pt-BR]
         product:
           [
@@ -33,6 +35,7 @@ jobs:
       FIREFOX_LANG: ${{ matrix.language }}
       FIREFOX_VERSION: NOT_SET
       FIREFOX_BUILD_ID: NOT_SET
+      FIREFOX_ARCH: NOT_SET
       RELEASE_NOTES_URL: https://www.mozilla.org/firefox/releasenotes
     permissions:
       contents: write
@@ -44,8 +47,8 @@ jobs:
           bash build/build.sh
           echo "$FIREFOX_VERSION.r$FIREFOX_BUILD_ID"
 
-      - if: ${{ matrix.product != 'firefox' }}
-        name: Release Variant
+      - 
+        name: Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -59,7 +62,7 @@ jobs:
 
             > [!TIP]
             > Expand the "Assets" section below to download the AppImage.
-          tag_name: ${{ env.FIREFOX_PRODUCT }}-${{env.FIREFOX_VERSION}}-${{ env.FIREFOX_LANG }}
+          tag_name: ${{ env.FIREFOX_PRODUCT }}-${{ env.FIREFOX_VERSION }}
           draft: false
           prerelease: false
           make_latest: false
