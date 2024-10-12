@@ -7,6 +7,7 @@ on:
       - "main"
     paths-ignore:
       - "**/*.md"
+      - "**/continuous.yml"
   push:
     branches:
       - "main"
@@ -14,54 +15,100 @@ on:
     - cron: "5 */12 * * *"
   workflow_dispatch:
 
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+
 jobs:
-  Build:
+  build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        os: [linux64] # i686/x86_64
-        language: [en-US, pt-BR]
-        product:
-          [
-            "firefox",
-            "firefox-beta",
-            "firefox-esr",
-            "firefox-nightly",
-            "firefox-devedition",
-          ]
+        channel:
+          - firefox
+          - firefox-beta
+          - firefox-esr
+          - firefox-nightly
+          - firefox-devedition
+        language:
+          - en-US
+          - pt-BR
+        os:
+          # - linux # i686
+          - linux64 # x86_64
+
+    name: ${{ matrix.os }}-${{ matrix.channel }}-${{ matrix.language }}
     env:
-      FIREFOX_PRODUCT: ${{ matrix.product }}
+      FIREFOX_CHANNEL: ${{ matrix.channel }}
       FIREFOX_OS: ${{ matrix.os }}
       FIREFOX_LANG: ${{ matrix.language }}
       FIREFOX_VERSION: NOT_SET
       FIREFOX_BUILD_ID: NOT_SET
-      FIREFOX_ARCH: NOT_SET
       RELEASE_NOTES_URL: https://www.mozilla.org/firefox/releasenotes
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build ${{ matrix.product }}-${{ env.FIREFOX_LANG }}
+      - name: Build ${{ matrix.channel }}-${{ matrix.language }}
         run: |
           bash build/build.sh
-          echo "$FIREFOX_VERSION.r$FIREFOX_BUILD_ID"
 
-      - 
-        name: Release
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}_${{ matrix.channel }}_${{ matrix.language }}
+          compression-level: 0
+          if-no-files-found: error
+          path: |
+            dist/*.AppImage
+            dist/*.zsync
+
+      - id: set_outputs
+        run: |
+          echo 'channel=${{ matrix.channel }}' >> $GITHUB_OUTPUT
+          echo 'version=${{ env.FIREFOX_VERSION }}' >> $GITHUB_OUTPUT
+          echo 'build_id=${{ env.FIREFOX_BUILD_ID }}' >> $GITHUB_OUTPUT
+          echo 'release_notes_url=${{ env.RELEASE_NOTES_URL }}" '>> $GITHUB_OUTPUT
+    outputs:
+      channel: ${{ steps.set_outputs.outputs.channel }}
+      version: ${{ steps.set_outputs.outputs.version }}
+      build_id: ${{ steps.set_outputs.outputs.build_id }}
+      release_notes_url: ${{ steps.set_outputs.outputs.release_notes_url }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        channel: ["${{ needs.build.outputs.channel }}"]
+        version: ["${{ needs.build.outputs.version }}"]
+        build_id: ["${{ needs.build.outputs.build_id }}"]
+        release_notes_url: ["${{ needs.build.outputs.release_notes_url }}"]
+
+    name: ${{ matrix.channel }}-${{ matrix.version }}
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: dist
+
+      - name: Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/*.AppImage
             dist/*.zsync
           body: |
-            BuildID: ${{ env.FIREFOX_BUILD_ID }}
+            BuildID: ${{ matrix.build_id }}
 
-            **[Firefox Release Notes](${{ env.RELEASE_NOTES_URL }})**
+            **[Firefox Release Notes](${{ matrix.release_notes_url }})**
 
             > [!TIP]
             > Expand the "Assets" section below to download the AppImage.
-          tag_name: ${{ env.FIREFOX_PRODUCT }}-${{ env.FIREFOX_VERSION }}
-          draft: false
-          prerelease: false
-          make_latest: false
+          tag_name: ${{ matrix.channel  }}-${{ matrix.version }}
+          make_latest: ${{ matrix.channel == 'firefox' }}

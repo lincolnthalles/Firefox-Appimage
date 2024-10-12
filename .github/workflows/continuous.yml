@@ -1,0 +1,90 @@
+name: Continuous
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - "main"
+    paths-ignore:
+      - "**/*.md"
+      - "**/release.yml"
+  push:
+    branches:
+      - "main"
+  schedule:
+    - cron: "5 */12 * * *"
+  workflow_dispatch:
+
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  cleanup-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Cleanup Continuous Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: continuous
+          allowUpdates: true
+          prerelease: true
+          removeArtifacts: true
+
+  build:
+    needs: cleanup-release
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        channel:
+          - firefox
+          - firefox-beta
+          - firefox-esr
+          - firefox-nightly
+          - firefox-devedition
+        language:
+          - en-US
+          - pt-BR
+        os:
+          - linux # i686
+          - linux64 # x86_64
+
+    name: ${{ matrix.os }}-${{ matrix.channel }}-${{ matrix.language }}
+    env:
+      FIREFOX_CHANNEL: ${{ matrix.channel }}
+      FIREFOX_OS: ${{ matrix.os }}
+      FIREFOX_LANG: ${{ matrix.language }}
+      FIREFOX_VERSION: NOT_SET
+      FIREFOX_BUILD_ID: NOT_SET
+      RELEASE_NOTES_URL: https://www.mozilla.org/firefox/releasenotes
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build ${{ matrix.channel }}-${{ matrix.language }}
+        run: |
+          bash build/build.sh
+
+      - name: Continuous Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: |
+            dist/*.AppImage
+            dist/*.zsync
+          body: |
+            # Release Notes
+
+              - **[Stable & ESR](https://www.mozilla.org/firefox/releasenotes)**
+              - **[Beta & Dev](https://www.mozilla.org/firefox/beta/notes/)**
+              - **[Nightly](https://www.mozilla.org/firefox/nightly/notes/)**
+
+            > [!TIP]
+            > Expand the "Assets" section below to download the AppImages.
+          tag: continuous
+          allowUpdates: true
+          artifactErrorsFailBuild: true
+          prerelease: true
