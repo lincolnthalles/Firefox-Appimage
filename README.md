@@ -13,7 +13,7 @@ Automated unofficial AppImages builds for the following release channels:
 - Developer Edition
 - Nightly
 
-[![Downloads](https://img.shields.io/github/downloads/lincolnthalles/Firefox-Appimage/total?logo=github)](https://github.com/mlincolnthalles/Firefox-Appimage/releases) [![GitHub Stars](https://img.shields.io/github/stars/lincolnthalles/Firefox-Appimage?logo=github)](https://github.com/lincolnthalles/Firefox-Appimage)
+[![Downloads](https://img.shields.io/github/downloads/lincolnthalles/Firefox-Appimage/total?logo=github)](https://github.com/lincolnthalles/Firefox-Appimage/releases) [![GitHub Stars](https://img.shields.io/github/stars/lincolnthalles/Firefox-Appimage?logo=github)](https://github.com/lincolnthalles/Firefox-Appimage)
 
 ## Get Started
 
