@@ -11,6 +11,9 @@ on:
   push:
     branches:
       - "main"
+    paths-ignore:
+      - "**/*.md"
+      - "**/release.yml"
   schedule:
     - cron: "5 */12 * * *"
   workflow_dispatch:
