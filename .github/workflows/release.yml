@@ -57,19 +57,19 @@ jobs:
       - name: Build ${{ matrix.channel }}-${{ matrix.language }}
         run: bash build/build.sh
 
+      # Error 422: Validation Failed: {"resource":"Release","code":"already_exists","field":"tag_name"}
       - name: Prepare Release
-        uses: ncipollo/release-action@v1
+        uses: softprops/action-gh-release@v2
         continue-on-error: true
         with:
-          tag: ${{ matrix.channel }}-${{ env.FIREFOX_VERSION }}
-          makeLatest: ${{ matrix.channel == 'firefox' }}
+          tag_name: ${{ matrix.channel }}-${{ env.FIREFOX_VERSION }}
+          make_latest: ${{ matrix.channel == 'firefox' && 'true' || 'false' }}
           prerelease: false
-          allowUpdates: true
 
       - name: Publish Release
-        uses: ncipollo/release-action@v1
+        uses: softprops/action-gh-release@v2
         with:
-          artifacts: |
+          files: |
             dist/*.AppImage
             dist/*.zsync
           body: |
@@ -79,8 +79,6 @@ jobs:
 
             > [!TIP]
             > Expand the "Assets" section below to download the AppImages.
-          tag: ${{ matrix.channel }}-${{ env.FIREFOX_VERSION }}
-          makeLatest: ${{ matrix.channel == 'firefox' }}
+          tag_name: ${{ matrix.channel }}-${{ env.FIREFOX_VERSION }}
+          make_latest: ${{ matrix.channel == 'firefox' && 'true' || 'false' }}
           prerelease: false
-          allowUpdates: true
-          artifactErrorsFailBuild: true
