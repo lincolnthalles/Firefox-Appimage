@@ -38,7 +38,7 @@ jobs:
           - en-US
           - pt-BR
         os:
-          # - linux # i686
+          - linux # i686
           - linux64 # x86_64
 
     name: ${{ matrix.os }}-${{ matrix.channel }}-${{ matrix.language }}
